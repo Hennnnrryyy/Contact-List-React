@@ -11,6 +11,7 @@ import React from 'react';
 
     state = {
       loading: false,
+      showEditModal: false,
       contactData: [
         {
           "contactId": 1, "firstName": "Fake",
@@ -25,6 +26,14 @@ import React from 'react';
         company: '',
         phone: '',
         email: ''
+      },
+      editContactData: {
+    	"contactId": 42,
+    	"firstName": "Zaphod",
+    	"lastName": "Beeblebrox",
+    	"company": "Heart of Gold",
+    	"phone": "000-0000",
+    	"email": "prez@badnews.us"
       }
     }
 
@@ -67,6 +76,68 @@ import React from 'react';
         });
     }
 
+handleEditModalOpen = (event) => {
+      console.log("Opening Edit Modal")
+      if (event) event.preventDefault();
+
+      let contactId = event.target.value;
+      console.log(`Editing contact id ${contactId}`)
+
+      // submit a GET request to the /contact/{contactId} endpoint
+      // the response should come back with the associated contact's JSON
+      fetch(SERVICE_URL+'/contact/'+contactId)
+      .then(response => response.json())
+      .then(data => {
+          console.log('Success:', data);
+          this.setState(
+            { editContactData : data , showEditModal : true}
+          )
+      })
+      .catch((error) => {
+          console.error('Error:', error);
+      });
+  }
+
+handleEditFormChange = (event) => {
+
+      let inputName = event.target.name;
+      let inputValue = event.target.value;
+      let contactInfo = this.state.editContactData;
+
+      console.log(`Something changed in ${inputName} : ${inputValue}`)
+
+      if(contactInfo.hasOwnProperty(inputName)){
+          contactInfo[inputName] = inputValue;
+          this.setState({ editContactData : contactInfo })
+      }
+
+  }
+
+  handleEditFormSubmit = (event) => {
+      if (event) event.preventDefault();
+      let contactId = event.target.value;
+      console.log(`Submitting edit for contact id ${contactId}`)
+      console.log(this.state.editContactData)
+
+      fetch(SERVICE_URL+'/contact/'+contactId, {
+          method: 'PUT',
+          headers: {
+              'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(this.state.editContactData),
+      })
+      .then(response => response.json())
+      .then(data => {
+          console.log('Success:', data);
+          this.setState({ showEditModal : false })
+          this.loadContactData();
+      })
+      .catch((error) => {
+          console.error('Error:', error);
+      });
+
+  }
+
     loadContactData() {
       this.setState({ loading: true })
       console.log("Loading contact data")
@@ -94,7 +165,10 @@ import React from 'react';
           <Row>
             <Col sm={8}>
               <h2>My Contacts</h2>
-              <ContactTable contacts={this.state.contactData} />
+              <ContactTable 
+		contacts={this.state.contactData} 
+		handleEdit={this.handleEditModalOpen}
+		/>
             </Col>
             <Col sm={4}>
               <h2>Add New Contact</h2>
@@ -104,10 +178,17 @@ import React from 'react';
                 contactData={this.state.newContactData} />
             </Col>
           </Row>
-          {/* <ContactModal/> */}
-        </Container>
+	<ContactModal
+         show={this.state.showEditModal}
+	 handleSubmit={this.handleEditFormSubmit}
+         handleChange={this.handleEditFormChange}
+         handleClose={this.handleEditModalClose}
+         contactData={this.state.editContactData} 
+	/>
+     </Container>
       );
     }
   }
 
   export default App;
+	
