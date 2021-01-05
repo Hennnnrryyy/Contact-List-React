@@ -138,6 +138,23 @@ handleEditFormChange = (event) => {
 
   }
 
+handleDeleteContact = (event) => {
+      if (event) event.preventDefault();
+      let contactId = event.target.value;
+      console.log(`Submitting delete for contact id ${contactId}`)
+
+      fetch(SERVICE_URL+'/contact/'+contactId, {
+          method: 'DELETE',
+      })
+      .then(data => {
+          this.loadContactData();
+      })
+      .catch((error) => {
+          console.error('Error:', error);
+      });
+  }
+
+
     loadContactData() {
       this.setState({ loading: true })
       console.log("Loading contact data")
@@ -168,6 +185,7 @@ handleEditFormChange = (event) => {
               <ContactTable 
 		contacts={this.state.contactData} 
 		handleEdit={this.handleEditModalOpen}
+		handleDelete={this.handleDeleteContact}
 		/>
             </Col>
             <Col sm={4}>
